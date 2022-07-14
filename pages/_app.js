@@ -1,4 +1,4 @@
-// import { Header } from "../components/Header"
+import { Header } from "../components/Header"
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from "@mui/material";
 
@@ -12,7 +12,7 @@ export default function App({ Component, pageProps }) {
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
-            {/* <Header /> */}
+            <Header />
             <Component { ...pageProps } />
         </ThemeProvider>
     );
