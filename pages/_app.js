@@ -1,7 +1,19 @@
-import '../styles/globals.css'
+// import { Header } from "../components/Header"
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { CssBaseline } from "@mui/material";
 
-function MyApp({ Component, pageProps }) {
-  return <Component {...pageProps} />
+export default function App({ Component, pageProps }) {
+    const darkTheme = createTheme({
+        palette: {
+          mode: 'dark',
+        },
+    });
+
+    return (
+        <ThemeProvider theme={darkTheme}>
+            <CssBaseline />
+            {/* <Header /> */}
+            <Component { ...pageProps } />
+        </ThemeProvider>
+    );
 }
-
-export default MyApp
