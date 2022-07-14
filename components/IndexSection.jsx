@@ -89,12 +89,8 @@ export function IndexSection() {
         );
     }
     
-    const LogNewBehaviorComponent = () => {
-
-        return(<>BRUH 2</>);
-    }
-
     const GreetingAndActionComponent = () => {
+        const router = useRouter();
         var greetingName = "";
         const firstName = currentTeacherData.firstName;
         const lastName = currentTeacherData.lastName;
@@ -111,7 +107,7 @@ export function IndexSection() {
                     <Typography component="div" variant='caption' fontSize="small">What would you like to do today?</Typography>
                 </Grid>
                 <Button fullWidth variant='outlined' onClick={() => setIndexSectionComponent(<ViewStudentProfileComponent />)}>View Student Profile</Button>
-                <Button fullWidth variant='contained' onClick={() => setIndexSectionComponent(<LogNewBehaviorComponent />)}>Log New Behavior</Button>
+                <Button fullWidth variant='contained' onClick={() => router.push("/logNewBehavior")}>Log New Behavior</Button>
             </Grid>
         );
     }
