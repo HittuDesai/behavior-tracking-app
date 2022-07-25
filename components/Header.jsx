@@ -1,9 +1,26 @@
-import { AppBar, Avatar, Box, Button, Grid, IconButton, Typography } from '@mui/material';
+import { useContext } from 'react';
+import { useRouter } from 'next/router';
+import { LoggedInTeacherContext } from '../context/LoggedInTeacherContext';
+
+import { AppBar, Avatar, Box, Grid, IconButton, Typography } from '@mui/material';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import LogoutIcon from '@mui/icons-material/Logout';
 
+import { auth } from "../firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+
 export function Header() {
-    const currentUserID = "1";
+    const router = useRouter();
+    const { loggedInTeacherData, updateTeacherData } = useContext(LoggedInTeacherContext);
+    console.log(loggedInTeacherData);
+
+    onAuthStateChanged(auth, user => {
+        if(!user) {
+            updateTeacherData(null);
+            return;
+        }
+        updateTeacherData(user);
+    });
 
     const HeaderWithoutSession = () => (
         <AppBar position="static" sx={{marginBottom: "1rem"}}>
@@ -15,9 +32,9 @@ export function Header() {
     );
 
     const handleSignOut = () => {
-        // signOut(auth).then(() => {
-        //     router.push("/");
-        // })
+        signOut(auth).then(() => {
+            router.push("/");
+        });
         console.log("Signed Out");
     }
 
@@ -47,8 +64,6 @@ export function Header() {
     );
 
     return (
-        <>
-        { currentUserID ? <HeaderWithSession /> : <HeaderWithoutSession />}
-        </>
+        <>{ loggedInTeacherData ? <HeaderWithSession /> : <HeaderWithoutSession />}</>
     );
 }

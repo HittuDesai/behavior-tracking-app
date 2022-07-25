@@ -1,6 +1,7 @@
 import { Header } from "../components/Header"
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from "@mui/material";
+import { LoggedInTeacherProvider } from "../context/LoggedInTeacherContext";
 
 export default function App({ Component, pageProps }) {
     const darkTheme = createTheme({
@@ -12,8 +13,10 @@ export default function App({ Component, pageProps }) {
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
-            <Header />
-            <Component { ...pageProps } />
+            <LoggedInTeacherProvider>
+                <Header />
+                <Component { ...pageProps } />
+            </LoggedInTeacherProvider>
         </ThemeProvider>
     );
 }
