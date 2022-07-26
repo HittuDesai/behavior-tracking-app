@@ -23,34 +23,39 @@ export function NewBehaviorSection() {
         "Intervention",
     ];
 
-    const allClasses = currentTeacherData.classes;
-    const [selectedClass, setSelectedClass] = useState("");
+    const allClasses = loggedInTeacherData?.classes;
+    const [selectedClass, setSelectedClass] = useState(null);
+
     const [allStudentsLoaded, setAllStudentsLoaded] = useState(false);
     const [allStudents, setAllStudents] = useState([]);
-    const [selectedStudent, setSelectedStudent] = useState("");
-
-    const handleClassSelect = event => {
+    const handleClassSelect = async event => {
         setAllStudentsLoaded(false);
-        const nameOfSelectedClass = event.target.value;
-        setSelectedClass(nameOfSelectedClass);
-        /* Fetch Data from Firbase regarding names of all students in selected class */
-        setAllStudents([
-            {studentID: "1", studentName: "Jack Reacher"},
-            {studentID: "2", studentName: "Ethan Hunt"},
-            {studentID: "3", studentName: "Pete Mitchell"},
-        ]);
+        const dataOfSelectedClass = event.target.value;
+        setSelectedClass(dataOfSelectedClass);
+
+        let arrayOfStudentData = [];
+        const arrayOfStudentIDs = dataOfSelectedClass.students;
+        for(const studentID of arrayOfStudentIDs) {
+            const studentReference = doc(db, `students/${studentID}`);
+            const studentSnapshot = await getDoc(studentReference);
+            const studentData = studentSnapshot.data();
+            arrayOfStudentData.push({ ...studentData, studentID });
+        }
+        setAllStudents(arrayOfStudentData);
         setAllStudentsLoaded(true);
     }
 
+    const [selectedStudent, setSelectedStudent] = useState("");
     const handleStudentSelect = event => {
-        setSelectedStudent(event.target.value);
+        const dataOfSelectedStudent = event.target.value;
+        console.log(dataOfSelectedStudent);
+        setSelectedStudent(dataOfSelectedStudent);
     }
 
     const StepZeroComponent = () => (<>
         <Box sx={{ width: "100%" }}>
             <InputLabel>Select Class</InputLabel>
             <Select
-            value={selectedClass}
             onChange={handleClassSelect}
             onOpen={() => setAllStudentsLoaded(false)}
             onClose={() => {
@@ -60,7 +65,7 @@ export function NewBehaviorSection() {
             variant="filled"
             sx={{ width: "100%" }}
             >{
-                allClasses.map(className => <MenuItem key={className} value={className}>{className}</MenuItem>)
+                allClasses.map(currentClass => <MenuItem key={currentClass.classID} value={currentClass}>{currentClass.name}</MenuItem>)
             }</Select>
         </Box>
 
@@ -73,7 +78,7 @@ export function NewBehaviorSection() {
             variant="filled"
             sx={{ width: "100%" }}
             >{
-                allStudents.map(({ studentID, studentName }) => <MenuItem key={studentID} value={studentID}>{studentName}</MenuItem>)
+                allStudents.map(studentData => <MenuItem key={studentData.studentID} value={studentData}>{studentData.firstName}</MenuItem>)
             }</Select>
         </Box>
     </>);

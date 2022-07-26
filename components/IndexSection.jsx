@@ -61,19 +61,6 @@ export function IndexSection() {
                     }</Select>
                 </Box>
 
-                <Box sx={{ width: "100%" }}>
-                    <InputLabel>Select Student</InputLabel>
-                    <Select
-                    disabled={!allStudentsLoaded}
-                    value={selectedStudent}
-                    onChange={handleStudentSelect}
-                    variant="filled"
-                    sx={{ width: "100%" }}
-                    >{
-                        allStudents.map(studentData => <MenuItem key={studentData.studentID} value={studentData}>{studentData.firstName}</MenuItem>)
-                    }</Select>
-                </Box>
-
                 <Grid container direction="row" alignItems="center" justifyContent="space-between">
                     <Button variant="text" onClick={() => setIndexSectionStatus("default")}>
                         Cancel
