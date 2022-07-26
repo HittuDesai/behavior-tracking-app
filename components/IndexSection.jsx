@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { LoggedInTeacherContext } from '../context/LoggedInTeacherContext';
 import { useRouter } from 'next/router';
 import { SignIn } from './Signin';
@@ -6,34 +6,41 @@ import { SignIn } from './Signin';
 import { Box, Button, Grid, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import ArrowCircleRightOutlinedIcon from '@mui/icons-material/ArrowCircleRightOutlined';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export function IndexSection() {
     const { loggedInTeacherData } = useContext(LoggedInTeacherContext);
-    // classes: ["ECE302", "ECE311", "ECE345", "JRE300", "APS360"],
 
     const ViewStudentProfileComponent = () => {
         const router = useRouter();
-        const allClasses = currentTeacherData.classes;
-        const [selectedClass, setSelectedClass] = useState("");
+        const allClasses = loggedInTeacherData?.classes;
+        const [selectedClass, setSelectedClass] = useState(null);
 
         const [allStudentsLoaded, setAllStudentsLoaded] = useState(false);
         const [allStudents, setAllStudents] = useState([]);
-        const handleClassSelect = event => {
+        const handleClassSelect = async event => {
             setAllStudentsLoaded(false);
-            const nameOfSelectedClass = event.target.value;
-            setSelectedClass(nameOfSelectedClass);
-            /* Fetch Data from Firbase regarding names of all students in selected class */
-            setAllStudents([
-                {studentID: "1", studentName: "Jack Reacher"},
-                {studentID: "2", studentName: "Ethan Hunt"},
-                {studentID: "3", studentName: "Pete Mitchell"},
-            ]);
+            const dataOfSelectedClass = event.target.value;
+            setSelectedClass(dataOfSelectedClass);
+
+            let arrayOfStudentData = [];
+            const arrayOfStudentIDs = dataOfSelectedClass.students;
+            for(const studentID of arrayOfStudentIDs) {
+                const studentReference = doc(db, `students/${studentID}`);
+                const studentSnapshot = await getDoc(studentReference);
+                const studentData = studentSnapshot.data();
+                arrayOfStudentData.push({ ...studentData, studentID });
+            }
+            setAllStudents(arrayOfStudentData);
             setAllStudentsLoaded(true);
         }
 
         const [selectedStudent, setSelectedStudent] = useState("");
         const handleStudentSelect = event => {
-            setSelectedStudent(event.target.value);
+            const dataOfSelectedStudent = event.target.value;
+            console.log(dataOfSelectedStudent);
+            setSelectedStudent(dataOfSelectedStudent);
         }
 
         return(
@@ -41,7 +48,6 @@ export function IndexSection() {
                 <Box sx={{ width: "100%" }}>
                     <InputLabel>Select Class</InputLabel>
                     <Select
-                    value={selectedClass}
                     onChange={handleClassSelect}
                     onOpen={() => setAllStudentsLoaded(false)}
                     onClose={() => {
@@ -51,7 +57,7 @@ export function IndexSection() {
                     variant="filled"
                     sx={{ width: "100%" }}
                     >{
-                        allClasses.map(className => <MenuItem key={className} value={className}>{className}</MenuItem>)
+                        allClasses.map(currentClass => <MenuItem key={currentClass.classID} value={currentClass}>{currentClass.name}</MenuItem>)
                     }</Select>
                 </Box>
 
@@ -59,23 +65,22 @@ export function IndexSection() {
                     <InputLabel>Select Student</InputLabel>
                     <Select
                     disabled={!allStudentsLoaded}
-                    // defaultOpen={allStudentsLoaded}
                     value={selectedStudent}
                     onChange={handleStudentSelect}
                     variant="filled"
                     sx={{ width: "100%" }}
                     >{
-                        allStudents.map(studentData => <MenuItem key={studentData.studentID} value={studentData.studentID}>{studentData.studentName}</MenuItem>)
+                        allStudents.map(studentData => <MenuItem key={studentData.studentID} value={studentData}>{studentData.firstName}</MenuItem>)
                     }</Select>
                 </Box>
 
                 <Grid container direction="row" alignItems="center" justifyContent="space-between">
-                    <Button variant="text" onClick={() => setIndexSectionComponent(<GreetingAndActionComponent />)}>
+                    <Button variant="text" onClick={() => setIndexSectionStatus("default")}>
                         Cancel
                         <CancelOutlinedIcon sx={{ marginLeft: "0.5rem" }} />
                     </Button>
                     <Button disabled={!(selectedClass && selectedStudent)} variant="contained" onClick={() => {
-                        router.push(`/${selectedStudent}`);
+                        router.push(`/${selectedStudent.studentID}`);
                     }}>
                         See Record
                         <ArrowCircleRightOutlinedIcon sx={{ marginLeft: "0.5rem", flexGrow: "1" }} />
@@ -85,13 +90,12 @@ export function IndexSection() {
         );
     }
     
-    const GreetingAndActionComponent = (loggedInTeacherData) => {
-        console.log(loggedInTeacherData);
+    const GreetingAndActionComponent = () => {
         const router = useRouter();
         var greetingName = "";
-        const firstName = loggedInTeacherData.firstName;
-        const lastName = loggedInTeacherData.lastName;
-        const preferredName = loggedInTeacherData.preferredName;
+        const firstName = loggedInTeacherData?.firstName;
+        const lastName = loggedInTeacherData?.lastName;
+        const preferredName = loggedInTeacherData?.preferredName;
         if(preferredName)
             greetingName = preferredName
         else
@@ -103,15 +107,18 @@ export function IndexSection() {
                     <Typography component="div" variant='overline' fontSize="large">Hello, {greetingName}</Typography>
                     <Typography component="div" variant='caption' fontSize="small">What would you like to do today?</Typography>
                 </Grid>
-                <Button fullWidth variant='outlined' onClick={() => setIndexSectionComponent(<ViewStudentProfileComponent />)}>View Student Profile</Button>
+                <Button fullWidth variant='outlined' onClick={() => setIndexSectionStatus(<ViewStudentProfileComponent />)}>View Student Profile</Button>
                 <Button fullWidth variant='contained' onClick={() => router.push("/logNewBehavior")}>Log New Behavior</Button>
             </Grid>
         );
     }
 
-    const [indexSectionComponent, setIndexSectionComponent] = useState(<GreetingAndActionComponent />)
+    const [indexSectionStatus, setIndexSectionStatus] = useState("default");
 
     return(
-        <>{loggedInTeacherData ? <>{indexSectionComponent}</> : <SignIn />}</>
+        <>{loggedInTeacherData ? 
+            <>{indexSectionStatus === "default" ? <GreetingAndActionComponent /> : <ViewStudentProfileComponent />}</> : 
+            <SignIn />
+        }</>
     );
 }

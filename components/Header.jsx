@@ -23,7 +23,18 @@ export function Header() {
             const loggedInTeacherID = userCredential.uid;
             const loggedInTeacherReference = doc(db, `teachers/${loggedInTeacherID}`);
             const loggedInTeacherSnapshot = await getDoc(loggedInTeacherReference);
-            const loggedInTeacherData = loggedInTeacherSnapshot.data();
+            let loggedInTeacherData = loggedInTeacherSnapshot.data();
+            const arrayOfClassIDs = loggedInTeacherData.classes;
+            let arrayOfClassData  = [];
+            for(const classID of arrayOfClassIDs) {
+                const classReference = doc(db, `classes/${classID}`);
+                getDoc(classReference).then(classSnapshot => {
+                    const classID = classSnapshot.id;
+                    const classData = classSnapshot.data();
+                    arrayOfClassData.push({ ...classData, classID });
+                }).catch(error => console.log(error));
+            }
+            loggedInTeacherData.classes = arrayOfClassData;
             updateTeacherData(loggedInTeacherData);
         });
     }, [])
