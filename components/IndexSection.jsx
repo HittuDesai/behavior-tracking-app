@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { LoggedInTeacherContext } from '../context/LoggedInTeacherContext';
 import { useRouter } from 'next/router';
 import { SignIn } from './Signin';
 
@@ -7,13 +8,8 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import ArrowCircleRightOutlinedIcon from '@mui/icons-material/ArrowCircleRightOutlined';
 
 export function IndexSection() {
-    const currentUserID = 1;
-    const currentTeacherData = {
-        firstName: "Hitarth",
-        lastName: "Desai",
-        preferredName: "HittuDesai",
-        classes: ["ECE302", "ECE311", "ECE345", "JRE300", "APS360"],
-    }
+    const { loggedInTeacherData } = useContext(LoggedInTeacherContext);
+    // classes: ["ECE302", "ECE311", "ECE345", "JRE300", "APS360"],
 
     const ViewStudentProfileComponent = () => {
         const router = useRouter();
@@ -89,12 +85,13 @@ export function IndexSection() {
         );
     }
     
-    const GreetingAndActionComponent = () => {
+    const GreetingAndActionComponent = (loggedInTeacherData) => {
+        console.log(loggedInTeacherData);
         const router = useRouter();
         var greetingName = "";
-        const firstName = currentTeacherData.firstName;
-        const lastName = currentTeacherData.lastName;
-        const preferredName = currentTeacherData.preferredName;
+        const firstName = loggedInTeacherData.firstName;
+        const lastName = loggedInTeacherData.lastName;
+        const preferredName = loggedInTeacherData.preferredName;
         if(preferredName)
             greetingName = preferredName
         else
@@ -111,9 +108,10 @@ export function IndexSection() {
             </Grid>
         );
     }
+
     const [indexSectionComponent, setIndexSectionComponent] = useState(<GreetingAndActionComponent />)
 
     return(
-        <>{currentUserID ? <>{indexSectionComponent}</> : <SignIn />}</>
+        <>{loggedInTeacherData ? <>{indexSectionComponent}</> : <SignIn />}</>
     );
 }

@@ -9,7 +9,7 @@ const firebaseConfig = {
     projectId: "behaviour-tracking-app",
     storageBucket: "behaviour-tracking-app.appspot.com",
     messagingSenderId: "1031385648618",
-    appId: "1:1031385648618:web:bdbcc52b9da3f9b2f07693"
+    appId: "1:1031385648618:web:bdbcc52b9da3f9b2f07693",
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

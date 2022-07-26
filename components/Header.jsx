@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { LoggedInTeacherContext } from '../context/LoggedInTeacherContext';
 
@@ -6,21 +6,27 @@ import { AppBar, Avatar, Box, Grid, IconButton, Typography } from '@mui/material
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import LogoutIcon from '@mui/icons-material/Logout';
 
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from 'firebase/firestore';
 
 export function Header() {
     const router = useRouter();
     const { loggedInTeacherData, updateTeacherData } = useContext(LoggedInTeacherContext);
-    console.log(loggedInTeacherData);
 
-    onAuthStateChanged(auth, user => {
-        if(!user) {
-            updateTeacherData(null);
-            return;
-        }
-        updateTeacherData(user);
-    });
+    useEffect(() => {
+        onAuthStateChanged(auth, async userCredential => {
+            if(!userCredential) {
+                updateTeacherData(null);
+                return;
+            }
+            const loggedInTeacherID = userCredential.uid;
+            const loggedInTeacherReference = doc(db, `teachers/${loggedInTeacherID}`);
+            const loggedInTeacherSnapshot = await getDoc(loggedInTeacherReference);
+            const loggedInTeacherData = loggedInTeacherSnapshot.data();
+            updateTeacherData(loggedInTeacherData);
+        });
+    }, [])
 
     const HeaderWithoutSession = () => (
         <AppBar position="static" sx={{marginBottom: "1rem"}}>

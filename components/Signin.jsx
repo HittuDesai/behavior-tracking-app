@@ -1,64 +1,62 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
+import { LoggedInTeacherContext } from '../context/LoggedInTeacherContext';
+import { useRouter } from 'next/router';
 import { Button, Box, Grid, TextField, Typography } from '@mui/material';
 
-// import { signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "firebase/auth";
-import { useRouter } from 'next/router';
+import { auth } from "../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export function SignIn() {
     const router = useRouter();
-    const [signinEmail, setSigninEmail] = useState("");
-    const [signinEmailError, setSigninEmailError] = useState("");
-    const [signinPassword, setSigninPassword] = useState("");
+    const { updateTeacherData } = useContext(LoggedInTeacherContext);
+    // const [signinUsername, setSigninUsername] = useState("");
+    const [signinUsernameError, setSigninUsernameError] = useState("");
+    // const [signinPassword, setSigninPassword] = useState("");
     const [signinPasswordError, setSigninPasswordError] = useState("");
+
+    const [signinUsername, setSigninUsername] = useState("mistrettam");
+    const [signinPassword, setSigninPassword] = useState("123456");
     
     const handleSignIn = (event) => {
         event.preventDefault();
-        if(signinEmail.length === 0) {
-            setSigninEmailError("Email cannot be empty");
+        if(signinUsername.length === 0) {
+            setSigninUsernameError("Username cannot be empty");
             setSigninPasswordError("");
             return;
         }
-        else {
-            const indexOfAtSymbol = signinEmail.indexOf("@");
-            const indexOfPeriod = signinEmail.lastIndexOf(".")
-            if(indexOfAtSymbol === -1 || indexOfPeriod === -1 || indexOfPeriod < indexOfAtSymbol || indexOfPeriod === indexOfAtSymbol + 1) {
-                setSigninEmailError("Email is not in the correct format");
-                setSigninPasswordError("");
-                return;
-            }
-        }
 
         if(signinPassword.length === 0) {
-            setSigninEmailError("");
+            setSigninUsernameError("");
             setSigninPasswordError("Password cannot be empty");
             return;
         }
 
-        console.log("Signed In Successfully");
+        const emailSuffix = "@behaviortrackingapp.com";
+        const signinEmail = signinUsername + emailSuffix;
 
-        // setPersistence(auth, browserSessionPersistence).then(() => {
-        //     signInWithEmailAndPassword(auth, signinEmail, signinPassword)
-        //     .then((userCredential) => {
-        //         const currentUserID = userCredential.user.uid;
-        //         setCurrentUserID(currentUserID);
-        //         router.replace(`/fetch/${currentUserID}`);
-        //     })
-        //     .catch((error) => {
-        //         const errorCode = error.code;
-        //         if(errorCode === "auth/invalid-email") {
-        //             setSigninEmailError("This Email is Invalid");
-        //             setSigninPasswordError("");
-        //         }
-        //         else if(errorCode === "auth/wrong-password") {
-        //             setSigninEmailError("");
-        //             setSigninPasswordError("This Password is Wrong")
-        //         }
-        //         else {
-        //             setSigninEmailError("");
-        //             setSigninPasswordError("There is some error at this time. Please try again later.")
-        //         }
-        //     });
-        // })
+        signInWithEmailAndPassword(auth, signinEmail, signinPassword)
+        .then(async userCredential => {
+            const loggedInTeacherID = userCredential.user.uid;
+            const loggedInTeacherReference = doc(`teachers/${loggedInTeacherID}`);
+            const loggedInTeacherSnapshot = await getDoc(loggedInTeacherReference);
+            const loggedInTeacherData = loggedInTeacherSnapshot.data();
+            updateTeacherData(loggedInTeacherData);
+        })
+        .catch(error => {
+            const errorCode = error.code;
+            if(errorCode === "auth/invalid-email") {
+                setSigninUsernameError("This Email is Invalid");
+                setSigninPasswordError("");
+            }
+            else if(errorCode === "auth/wrong-password") {
+                setSigninUsernameError("");
+                setSigninPasswordError("This Password is Wrong")
+            }
+            else {
+                setSigninUsernameError("");
+                setSigninPasswordError("There is some error at this time. Please try again later.")
+            }
+        });
     }
 
     return (
@@ -68,17 +66,17 @@ export function SignIn() {
                     <TextField
                     required
                     fullWidth
-                    type="email"
+                    type="text"
                     variant='filled'
-                    label="Email"
-                    placeholder="Your Email"
-                    onChange={event => setSigninEmail(event.target.value)}
+                    label="Username"
+                    placeholder="Your Username"
+                    onChange={event => setSigninUsername(event.target.value)}
                     autoComplete="none"
-                    value={signinEmail}
+                    value={signinUsername}
                     />
-                    {signinEmailError !== "" &&
+                    {signinUsernameError !== "" &&
                     <Typography size='xs' style={{fontStyle: "italic"}} weight="bolder" color="red">
-                        {signinEmailError}
+                        {signinUsernameError}
                     </Typography>}
                 </Box>
 
