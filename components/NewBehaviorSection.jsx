@@ -1,20 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { LoggedInTeacherContext } from '../context/LoggedInTeacherContext';
 import { useRouter } from 'next/router';
 
-import { Box, Button, Grid, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import { Box, Button, Grid, InputLabel, MenuItem, Select } from '@mui/material';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import ArrowCircleRightOutlinedIcon from '@mui/icons-material/ArrowCircleRightOutlined';
-import { CheckBox } from '@mui/icons-material';
+
+import { db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export function NewBehaviorSection() {
+    const { loggedInTeacherData } = useContext(LoggedInTeacherContext);
     const router = useRouter();
-    const currentUserID = 1;
-    const currentTeacherData = {
-        firstName: "Hitarth",
-        lastName: "Desai",
-        preferredName: "HittuDesai",
-        classes: ["ECE302", "ECE311", "ECE345", "JRE300", "APS360"],
-    };
+    useEffect(() => {
+        if(!loggedInTeacherData) {
+            router.push("/");
+            return;
+        }
+    }, []);
 
     const [currentStep, setCurrentStep] = useState(0);
     const stepsToLogNewBehavior = [
@@ -65,7 +68,7 @@ export function NewBehaviorSection() {
             variant="filled"
             sx={{ width: "100%" }}
             >{
-                allClasses.map(currentClass => <MenuItem key={currentClass.classID} value={currentClass}>{currentClass.name}</MenuItem>)
+                allClasses?.map(currentClass => <MenuItem key={currentClass.classID} value={currentClass}>{currentClass.name}</MenuItem>)
             }</Select>
         </Box>
 
