@@ -117,6 +117,8 @@ export function Header() {
 		</AppBar>
 	);
 
+	if (router.asPath.endsWith("admin")) return <HeaderWithoutSession />;
+
 	return (
 		<>
 			{loggedInTeacherData ? (
