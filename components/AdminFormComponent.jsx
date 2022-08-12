@@ -13,7 +13,8 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 
 export function AdminFormComponent({ formType }) {
-	const StudentForm = () => {
+	console.log(formType);
+	const ClassForm = () => {
 		const [allStudents, setAllStudents] = useState([]);
 		useEffect(() => {
 			const studentsCollection = collection(db, "students");
@@ -61,6 +62,19 @@ export function AdminFormComponent({ formType }) {
 			setSelectedStudentIDs(arrayOfStudentIDs);
 		}, [selectedStudentNames]);
 
+		const handleAddClass = () => {
+			if (nameOfClass === "" || selectedStudentIDs.length === 0) return;
+			const classesReference = collection(db, "classes");
+			const classData = {
+				name: nameOfClass,
+				students: selectedStudentIDs,
+			};
+			console.log(classData);
+			addDoc(classesReference, classData).catch(error =>
+				console.error(error)
+			);
+		};
+
 		return (
 			<Grid
 				width="100%"
@@ -81,7 +95,7 @@ export function AdminFormComponent({ formType }) {
 					/>
 				</Box>
 				<Box sx={{ width: "100%" }}>
-					<InputLabel>Name of Class</InputLabel>
+					<InputLabel>Students of the Class</InputLabel>
 					<Select
 						multiple
 						value={selectedStudentNames}
@@ -92,7 +106,6 @@ export function AdminFormComponent({ formType }) {
 								))}
 							</Box>
 						)}
-						// onChange={handleChange}
 						variant="filled"
 						sx={{ width: "100%" }}
 					>
@@ -113,35 +126,118 @@ export function AdminFormComponent({ formType }) {
 					fullWidth
 					variant="contained"
 					color="success"
-					onClick={() => {
-						if (
-							nameOfClass === "" ||
-							selectedStudentIDs.length === 0
-						)
-							return;
-						const classesReference = collection(db, "classes");
-						addDoc(classesReference, {
-							name: nameOfClass,
-							students: selectedStudentIDs,
-						});
-					}}
+					onClick={handleAddClass}
 				>
 					Add Class
 				</Button>
 			</Grid>
 		);
 	};
-	const ClassForm = () => (
-		<Grid
-			width="100%"
-			container
-			direction="column"
-			alignItems="center"
-			justifyContent="center"
-		>
-			Please click on a button to view the form
-		</Grid>
-	);
 
-	return <StudentForm />;
+	const StudentForm = () => {
+		const [firstName, setFirstName] = useState("");
+		const [lastName, setLastName] = useState("");
+		const handleAddStudent = () => {
+			if (nameOfClass === "" || selectedStudentIDs.length === 0) return;
+			const classesReference = collection(db, "classes");
+			const classData = {
+				name: nameOfClass,
+				students: selectedStudentIDs,
+			};
+			console.log(classData);
+			addDoc(classesReference, classData).catch(error =>
+				console.error(error)
+			);
+		};
+		return (
+			<Grid
+				width="100%"
+				height="90%"
+				container
+				direction="column"
+				alignItems="center"
+				justifyContent="center"
+				rowGap="1rem"
+			>
+				<Box sx={{ width: "100%" }}>
+					<InputLabel>First Name</InputLabel>
+					<TextField
+						fullWidth
+						placeholder="Enter First Name"
+						value={firstName}
+						onChange={event => setFirstName(event.target.value)}
+					/>
+				</Box>
+				<Box sx={{ width: "100%" }}>
+					<InputLabel>Last Name</InputLabel>
+					<TextField
+						fullWidth
+						placeholder="Enter Last Name"
+						value={lastName}
+						onChange={event => setLastName(event.target.value)}
+					/>
+				</Box>
+				<Button
+					fullWidth
+					variant="contained"
+					color="success"
+					onClick={handleAddStudent}
+				>
+					Add Student
+				</Button>
+			</Grid>
+		);
+	};
+
+	const TeacherForm = () => {
+		const [firstName, setFirstName] = useState("");
+		const [lastName, setLastName] = useState("");
+
+		const handleAddTeacher = () => {};
+		return (
+			<Grid
+				width="100%"
+				height="90%"
+				container
+				direction="column"
+				alignItems="center"
+				justifyContent="center"
+				rowGap="1rem"
+			>
+				<Box sx={{ width: "100%" }}>
+					<InputLabel>First Name</InputLabel>
+					<TextField
+						fullWidth
+						placeholder="Enter First Name"
+						value={firstName}
+						onChange={event => setFirstName(event.target.value)}
+					/>
+				</Box>
+				<Box sx={{ width: "100%" }}>
+					<InputLabel>Last Name</InputLabel>
+					<TextField
+						fullWidth
+						placeholder="Enter Last Name"
+						value={lastName}
+						onChange={event => setLastName(event.target.value)}
+					/>
+				</Box>
+				<Button
+					fullWidth
+					variant="contained"
+					color="success"
+					onClick={handleAddTeacher}
+				>
+					Add Student
+				</Button>
+			</Grid>
+		);
+	};
+
+	const ComponentToReturn = () => {
+		if (formType === "class") return <ClassForm />;
+		if (formType === "student") return <StudentForm />;
+		if (formType === "teacher") return <TeacherForm />;
+	};
+	return <ComponentToReturn />;
 }
