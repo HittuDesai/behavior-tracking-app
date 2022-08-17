@@ -138,7 +138,7 @@ export function AdminFormComponent({ formType }) {
 		const [lastName, setLastName] = useState("");
 		const handleAddStudent = () => {
 			if (firstName.trim() === "" || lastName.trim() === "") return;
-			const firstCharacterOfFirstName = firstName.charAt(0);
+			const firstCharacterOfFirstName = firstName.charAt(0).toLowerCase();
 			const newFirstName = firstName
 				.trim()
 				.toLowerCase()
@@ -146,7 +146,7 @@ export function AdminFormComponent({ formType }) {
 					firstCharacterOfFirstName,
 					firstCharacterOfFirstName.toUpperCase()
 				);
-			const firstCharacterOfLastName = lastName.charAt(0);
+			const firstCharacterOfLastName = lastName.charAt(0).toLowerCase();
 			const newLastName = lastName
 				.trim()
 				.toLowerCase()
@@ -154,7 +154,7 @@ export function AdminFormComponent({ formType }) {
 					firstCharacterOfLastName,
 					firstCharacterOfLastName.toUpperCase()
 				);
-			const studentsReference = collection(db, "classes");
+			const studentsReference = collection(db, "students");
 			const studentData = {
 				firstName: newFirstName,
 				lastName: newLastName,
@@ -253,7 +253,7 @@ export function AdminFormComponent({ formType }) {
 
 		const handleAddTeacher = () => {
 			if (firstName.trim() === "" || lastName.trim() === "") return;
-			const firstCharacterOfFirstName = firstName.charAt(0);
+			const firstCharacterOfFirstName = firstName.charAt(0).toLowerCase();
 			const newFirstName = firstName
 				.trim()
 				.toLowerCase()
@@ -261,7 +261,7 @@ export function AdminFormComponent({ formType }) {
 					firstCharacterOfFirstName,
 					firstCharacterOfFirstName.toUpperCase()
 				);
-			const firstCharacterOfLastName = lastName.charAt(0);
+			const firstCharacterOfLastName = lastName.charAt(0).toLowerCase();
 			const newLastName = lastName
 				.trim()
 				.toLowerCase()
