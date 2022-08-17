@@ -13,7 +13,6 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 
 export function AdminFormComponent({ formType }) {
-	console.log(formType);
 	const ClassForm = () => {
 		const [allStudents, setAllStudents] = useState([]);
 		useEffect(() => {
@@ -205,8 +204,52 @@ export function AdminFormComponent({ formType }) {
 	};
 
 	const TeacherForm = () => {
+		const [allClasses, setAllClasses] = useState([]);
+		useEffect(() => {
+			const classesCollection = collection(db, "classes");
+			getDocs(classesCollection).then(snapshot => {
+				const allClassesArray = [];
+				const allClassesDocs = snapshot.docs;
+				for (const classDoc of allClassesDocs) {
+					allClassesArray.push({
+						...classDoc.data(),
+						classID: classDoc.id,
+					});
+				}
+				setAllClasses(allClassesArray);
+			});
+		}, []);
+
 		const [firstName, setFirstName] = useState("");
 		const [lastName, setLastName] = useState("");
+		const [selectedClassNames, setSelectedClassNames] = useState([]);
+		const handleChange = event => {
+			const className = event.target.getAttribute("data-value");
+			const isClassAlreadyAdded = selectedClassNames.includes(className);
+			if (isClassAlreadyAdded) {
+				const arrayOfSelectedClassNames = [...selectedClassNames];
+				arrayOfSelectedClassNames.splice(
+					selectedClassNames.indexOf(className),
+					1
+				);
+				setSelectedClassNames(arrayOfSelectedClassNames);
+			} else {
+				setSelectedClassNames(oldValue => [...oldValue, className]);
+			}
+		};
+
+		const [selectedClassIDs, setSelectedClassIDs] = useState([]);
+		useEffect(() => {
+			if (selectedClassNames.length === 0) return;
+			let arrayOfClassIDs = [];
+			for (const className of selectedClassNames) {
+				const classData = allClasses.find(
+					classObject => classObject.name === className
+				);
+				arrayOfClassIDs.push(classData.classID);
+			}
+			setSelectedClassIDs(arrayOfClassIDs);
+		}, [selectedClassNames]);
 
 		const handleAddTeacher = () => {
 			if (firstName.trim() === "" || lastName.trim() === "") return;
@@ -229,11 +272,15 @@ export function AdminFormComponent({ formType }) {
 			const teacherData = {
 				firstName: newFirstName,
 				lastName: newLastName,
+				classes: selectedClassIDs,
 			};
-			// addDoc(studentsReference, studentData).catch(error =>
-			// 	console.error(error)
-			// );
+
+			const teachersReference = collection(db, "teachers");
+			addDoc(teachersReference, teacherData).catch(error =>
+				console.error(error)
+			);
 		};
+
 		return (
 			<Grid
 				width="100%"
@@ -261,6 +308,34 @@ export function AdminFormComponent({ formType }) {
 						value={lastName}
 						onChange={event => setLastName(event.target.value)}
 					/>
+				</Box>
+				<Box sx={{ width: "100%" }}>
+					<InputLabel>Classes of the Teacher</InputLabel>
+					<Select
+						multiple
+						value={selectedClassNames}
+						renderValue={() => (
+							<Box>
+								{selectedClassNames.map(value => (
+									<Chip key={value} label={value} />
+								))}
+							</Box>
+						)}
+						variant="filled"
+						sx={{ width: "100%" }}
+					>
+						{allClasses.map(classObject => {
+							return (
+								<MenuItem
+									key={classObject.classID}
+									value={classObject.name}
+									onClick={handleChange}
+								>
+									{classObject.name}
+								</MenuItem>
+							);
+						})}
+					</Select>
 				</Box>
 				<Button
 					fullWidth
