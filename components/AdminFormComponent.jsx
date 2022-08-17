@@ -8,9 +8,10 @@ import {
 	Select,
 	TextField,
 } from "@mui/material";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { addDoc, collection, doc, getDocs, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 
 export function AdminFormComponent({ formType }) {
 	const ClassForm = () => {
@@ -269,15 +270,30 @@ export function AdminFormComponent({ formType }) {
 					firstCharacterOfLastName,
 					firstCharacterOfLastName.toUpperCase()
 				);
+
+			const username =
+				firstName.trim().toLowerCase() +
+				lastName.trim().toLowerCase().charAt(0);
+			const email = username + "@behaviortrackingapp.com";
+			const password = "123456";
+
 			const teacherData = {
 				firstName: newFirstName,
 				lastName: newLastName,
 				classes: selectedClassIDs,
+				username,
+				password,
 			};
-
-			const teachersReference = collection(db, "teachers");
-			addDoc(teachersReference, teacherData).catch(error =>
-				console.error(error)
+			createUserWithEmailAndPassword(auth, email, password).then(
+				userCredentials => {
+					const userID = userCredentials.user.uid;
+					const teacherDoc = doc(db, `teachers/${userID}`);
+					setDoc(teacherDoc, teacherData)
+						.then(() => {
+							signOut(auth);
+						})
+						.catch(error => console.error(error));
+				}
 			);
 		};
 

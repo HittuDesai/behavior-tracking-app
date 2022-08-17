@@ -14,13 +14,14 @@ export function SignIn() {
 	// const [signinPassword, setSigninPassword] = useState("");
 	const [signinPasswordError, setSigninPasswordError] = useState("");
 
-	const [signinUsername, setSigninUsername] = useState("mistrettam");
-	const [signinPassword, setSigninPassword] = useState("123456");
+	const [signinUsername, setSigninUsername] = useState("");
+	const [signinPassword, setSigninPassword] = useState("");
 
 	const handleSignIn = event => {
 		event.preventDefault();
 		if (signinUsername.length === 0) {
 			setSigninUsernameError("Username cannot be empty");
+			t;
 			setSigninPasswordError("");
 			return;
 		}
