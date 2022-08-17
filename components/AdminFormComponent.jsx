@@ -63,13 +63,13 @@ export function AdminFormComponent({ formType }) {
 		}, [selectedStudentNames]);
 
 		const handleAddClass = () => {
-			if (nameOfClass === "" || selectedStudentIDs.length === 0) return;
+			if (nameOfClass.trim() === "" || selectedStudentIDs.length === 0)
+				return;
 			const classesReference = collection(db, "classes");
 			const classData = {
 				name: nameOfClass,
 				students: selectedStudentIDs,
 			};
-			console.log(classData);
 			addDoc(classesReference, classData).catch(error =>
 				console.error(error)
 			);
@@ -138,14 +138,29 @@ export function AdminFormComponent({ formType }) {
 		const [firstName, setFirstName] = useState("");
 		const [lastName, setLastName] = useState("");
 		const handleAddStudent = () => {
-			if (nameOfClass === "" || selectedStudentIDs.length === 0) return;
-			const classesReference = collection(db, "classes");
-			const classData = {
-				name: nameOfClass,
-				students: selectedStudentIDs,
+			if (firstName.trim() === "" || lastName.trim() === "") return;
+			const firstCharacterOfFirstName = firstName.charAt(0);
+			const newFirstName = firstName
+				.trim()
+				.toLowerCase()
+				.replace(
+					firstCharacterOfFirstName,
+					firstCharacterOfFirstName.toUpperCase()
+				);
+			const firstCharacterOfLastName = lastName.charAt(0);
+			const newLastName = lastName
+				.trim()
+				.toLowerCase()
+				.replace(
+					firstCharacterOfLastName,
+					firstCharacterOfLastName.toUpperCase()
+				);
+			const studentsReference = collection(db, "classes");
+			const studentData = {
+				firstName: newFirstName,
+				lastName: newLastName,
 			};
-			console.log(classData);
-			addDoc(classesReference, classData).catch(error =>
+			addDoc(studentsReference, studentData).catch(error =>
 				console.error(error)
 			);
 		};
@@ -193,7 +208,32 @@ export function AdminFormComponent({ formType }) {
 		const [firstName, setFirstName] = useState("");
 		const [lastName, setLastName] = useState("");
 
-		const handleAddTeacher = () => {};
+		const handleAddTeacher = () => {
+			if (firstName.trim() === "" || lastName.trim() === "") return;
+			const firstCharacterOfFirstName = firstName.charAt(0);
+			const newFirstName = firstName
+				.trim()
+				.toLowerCase()
+				.replace(
+					firstCharacterOfFirstName,
+					firstCharacterOfFirstName.toUpperCase()
+				);
+			const firstCharacterOfLastName = lastName.charAt(0);
+			const newLastName = lastName
+				.trim()
+				.toLowerCase()
+				.replace(
+					firstCharacterOfLastName,
+					firstCharacterOfLastName.toUpperCase()
+				);
+			const teacherData = {
+				firstName: newFirstName,
+				lastName: newLastName,
+			};
+			// addDoc(studentsReference, studentData).catch(error =>
+			// 	console.error(error)
+			// );
+		};
 		return (
 			<Grid
 				width="100%"
