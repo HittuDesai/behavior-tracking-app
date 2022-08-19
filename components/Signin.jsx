@@ -4,7 +4,11 @@ import { useRouter } from "next/router";
 import { Button, Box, Grid, TextField, Typography } from "@mui/material";
 
 import { auth } from "../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+	browserSessionPersistence,
+	setPersistence,
+	signInWithEmailAndPassword,
+} from "firebase/auth";
 
 export function SignIn() {
 	const router = useRouter();
@@ -35,29 +39,31 @@ export function SignIn() {
 		const emailSuffix = "@behaviortrackingapp.com";
 		const signinEmail = signinUsername + emailSuffix;
 
-		signInWithEmailAndPassword(auth, signinEmail, signinPassword)
-			.then(async userCredential => {
-				// const loggedInTeacherID = userCredential.user.uid;
-				// const loggedInTeacherReference = doc(`teachers/${loggedInTeacherID}`);
-				// const loggedInTeacherSnapshot = await getDoc(loggedInTeacherReference);
-				// const loggedInTeacherData = loggedInTeacherSnapshot.data();
-				// updateTeacherData(loggedInTeacherData);
-			})
-			.catch(error => {
-				const errorCode = error.code;
-				if (errorCode === "auth/invalid-email") {
-					setSigninUsernameError("This Email is Invalid");
-					setSigninPasswordError("");
-				} else if (errorCode === "auth/wrong-password") {
-					setSigninUsernameError("");
-					setSigninPasswordError("This Password is Wrong");
-				} else {
-					setSigninUsernameError("");
-					setSigninPasswordError(
-						"There is some error at this time. Please try again later."
-					);
-				}
-			});
+		setPersistence(auth, browserSessionPersistence).then(() =>
+			signInWithEmailAndPassword(auth, signinEmail, signinPassword)
+				.then(async userCredential => {
+					// const loggedInTeacherID = userCredential.user.uid;
+					// const loggedInTeacherReference = doc(`teachers/${loggedInTeacherID}`);
+					// const loggedInTeacherSnapshot = await getDoc(loggedInTeacherReference);
+					// const loggedInTeacherData = loggedInTeacherSnapshot.data();
+					// updateTeacherData(loggedInTeacherData);
+				})
+				.catch(error => {
+					const errorCode = error.code;
+					if (errorCode === "auth/invalid-email") {
+						setSigninUsernameError("This Email is Invalid");
+						setSigninPasswordError("");
+					} else if (errorCode === "auth/wrong-password") {
+						setSigninUsernameError("");
+						setSigninPasswordError("This Password is Wrong");
+					} else {
+						setSigninUsernameError("");
+						setSigninPasswordError(
+							"There is some error at this time. Please try again later."
+						);
+					}
+				})
+		);
 	};
 
 	return (

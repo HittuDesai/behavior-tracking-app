@@ -2,12 +2,29 @@ import { useContext, useEffect, useState } from "react";
 import { LoggedInTeacherContext } from "../context/LoggedInTeacherContext";
 import { useRouter } from "next/router";
 
-import { Box, Button, Grid, InputLabel, MenuItem, Select } from "@mui/material";
+import {
+	Box,
+	Button,
+	CircularProgress,
+	Grid,
+	InputLabel,
+	MenuItem,
+	Select,
+	Typography,
+} from "@mui/material";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import ArrowCircleRightOutlinedIcon from "@mui/icons-material/ArrowCircleRightOutlined";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import {
+	addDoc,
+	arrayUnion,
+	collection,
+	doc,
+	getDoc,
+	updateDoc,
+} from "firebase/firestore";
 
 export function NewBehaviorSection() {
 	const { loggedInTeacherData } = useContext(LoggedInTeacherContext);
@@ -20,16 +37,20 @@ export function NewBehaviorSection() {
 	}, []);
 
 	const [currentStep, setCurrentStep] = useState(0);
-	const stepsToLogNewBehavior = ["Student", "Behavior", "Intervention"];
 
 	const allClasses = loggedInTeacherData?.classes;
 	const [selectedClass, setSelectedClass] = useState(null);
+	const [selectedClassName, setSelectedClassName] = useState("");
 
 	const [allStudentsLoaded, setAllStudentsLoaded] = useState(false);
 	const [allStudents, setAllStudents] = useState([]);
 	const handleClassSelect = async event => {
 		setAllStudentsLoaded(false);
-		const dataOfSelectedClass = event.target.value;
+		const nameOfSelectedClass = event.target.value;
+		setSelectedClassName(nameOfSelectedClass);
+		const dataOfSelectedClass = allClasses.filter(
+			classData => classData.name === nameOfSelectedClass
+		)[0];
 		setSelectedClass(dataOfSelectedClass);
 
 		let arrayOfStudentData = [];
@@ -47,7 +68,6 @@ export function NewBehaviorSection() {
 	const [selectedStudent, setSelectedStudent] = useState("");
 	const handleStudentSelect = event => {
 		const dataOfSelectedStudent = event.target.value;
-		console.log(dataOfSelectedStudent);
 		setSelectedStudent(dataOfSelectedStudent);
 	};
 
@@ -61,13 +81,14 @@ export function NewBehaviorSection() {
 					onClose={() => {
 						if (allStudents) setAllStudentsLoaded(true);
 					}}
+					value={selectedClassName.valueOf()}
 					variant="filled"
 					sx={{ width: "100%" }}
 				>
 					{allClasses?.map(currentClass => (
 						<MenuItem
 							key={currentClass.classID}
-							value={currentClass}
+							value={currentClass.name}
 						>
 							{currentClass.name}
 						</MenuItem>
@@ -251,11 +272,6 @@ export function NewBehaviorSection() {
 		</>
 	);
 
-	const arrayOfComponents = [
-		<StepZeroComponent />,
-		<StepOneComponent />,
-		<StepTwoComponent />,
-	];
 	const [disabled, setDisabled] = useState(true);
 	useEffect(() => {
 		if (currentStep === 0) {
@@ -278,6 +294,84 @@ export function NewBehaviorSection() {
 		interventionResult,
 	]);
 
+	const [loading, setLoading] = useState(false);
+	const logBehaviorHandler = () => {
+		setLoading(true);
+		const classID = selectedClass.classID;
+		const teacherID = loggedInTeacherData.teacherID;
+		const studentID = selectedStudent.studentID;
+		const behaviorData = {
+			classID,
+			teacherID,
+			studentID,
+			behaviorType: selectedBehaviorType,
+			behaviorName: selectedBehavior,
+			interventionName: selectedIntervention,
+			interventionSuccess: interventionResult,
+		};
+		const behaviorsCollection = collection(db, "behaviors");
+		addDoc(behaviorsCollection, behaviorData)
+			.then(behaviorSnapshot => {
+				const behaviorID = behaviorSnapshot.id;
+				const classDocRef = doc(db, `classes/${classID}`);
+				updateDoc(classDocRef, {
+					behaviors: arrayUnion(behaviorID),
+				});
+				const teacherDocRef = doc(db, `teachers/${teacherID}`);
+				updateDoc(teacherDocRef, {
+					behaviors: arrayUnion(behaviorID),
+				});
+				const studentDocRef = doc(db, `students/${studentID}`);
+				updateDoc(studentDocRef, {
+					behaviors: arrayUnion(behaviorID),
+				});
+			})
+			.then(() => {
+				setLoading(false);
+			});
+	};
+
+	const LoggingSuccessComponent = () => {
+		return (
+			<Grid
+				container
+				direction="column"
+				alignItems="center"
+				justifyContent="center"
+				gap="1rem"
+			>
+				{loading ? (
+					<>
+						<CircularProgress />
+						<Typography>Uploading the Behavior</Typography>
+					</>
+				) : (
+					<>
+						<CheckCircleIcon
+							fontSize="large"
+							sx={{ color: "green" }}
+						/>
+						<Typography>Behavior Uploaded Successfully</Typography>
+						<Button
+							fullWidth
+							variant="text"
+							onClick={() => router.push("/")}
+						>
+							Go Home
+						</Button>
+					</>
+				)}
+			</Grid>
+		);
+	};
+
+	const arrayOfComponents = [
+		<StepZeroComponent />,
+		<StepOneComponent />,
+		<StepTwoComponent />,
+		<LoggingSuccessComponent />,
+	];
+
 	return (
 		<Grid
 			container
@@ -289,41 +383,34 @@ export function NewBehaviorSection() {
 			height="80vh"
 		>
 			{arrayOfComponents[currentStep]}
-			<Grid
-				container
-				direction="row"
-				alignItems="center"
-				justifyContent="space-between"
-			>
-				<Button variant="text" onClick={() => router.push("/")}>
-					Cancel
-					<CancelOutlinedIcon sx={{ marginLeft: "0.5rem" }} />
-				</Button>
-				<Button
-					disabled={disabled}
-					variant="contained"
-					onClick={() => {
-						if (currentStep === 2) {
-							const dataObject = {
-								selectedClass,
-								selectedStudent,
-								selectedBehaviorType,
-								selectedBehavior,
-								selectedIntervention,
-								interventionResult,
-							};
-							console.log(dataObject);
-							return;
-						}
-						setCurrentStep(value => value + 1);
-					}}
+			{currentStep !== 3 && (
+				<Grid
+					container
+					direction="row"
+					alignItems="center"
+					justifyContent="space-between"
 				>
-					{currentStep === 2 ? "Log Behavior" : "Next"}
-					<ArrowCircleRightOutlinedIcon
-						sx={{ marginLeft: "0.5rem", flexGrow: "1" }}
-					/>
-				</Button>
-			</Grid>
+					<Button variant="text" onClick={() => router.push("/")}>
+						Cancel
+						<CancelOutlinedIcon sx={{ marginLeft: "0.5rem" }} />
+					</Button>
+					<Button
+						disabled={disabled}
+						variant="contained"
+						onClick={() => {
+							if (currentStep === 2) {
+								logBehaviorHandler();
+							}
+							setCurrentStep(value => value + 1);
+						}}
+					>
+						{currentStep === 2 ? "Log Behavior" : "Next"}
+						<ArrowCircleRightOutlinedIcon
+							sx={{ marginLeft: "0.5rem", flexGrow: "1" }}
+						/>
+					</Button>
+				</Grid>
+			)}
 		</Grid>
 	);
 }

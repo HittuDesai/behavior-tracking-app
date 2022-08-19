@@ -37,7 +37,10 @@ export function Header() {
 			const loggedInTeacherSnapshot = await getDoc(
 				loggedInTeacherReference
 			);
-			let loggedInTeacherData = loggedInTeacherSnapshot.data();
+			let loggedInTeacherData = {
+				...loggedInTeacherSnapshot.data(),
+				teacherID: loggedInTeacherSnapshot.id,
+			};
 			const arrayOfClassIDs = loggedInTeacherData.classes;
 			let arrayOfClassData = [];
 			for (const classID of arrayOfClassIDs) {
