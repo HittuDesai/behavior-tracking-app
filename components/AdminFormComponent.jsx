@@ -70,9 +70,13 @@ export function AdminFormComponent({ formType }) {
 				name: nameOfClass,
 				students: selectedStudentIDs,
 			};
-			addDoc(classesReference, classData).catch(error =>
-				console.error(error)
-			);
+			addDoc(classesReference, classData)
+				.then(() => {
+					setNameOfClass("");
+					setSelectedStudentNames([]);
+					setSelectedStudentIDs([]);
+				})
+				.catch(error => console.error(error));
 		};
 
 		return (
@@ -160,9 +164,12 @@ export function AdminFormComponent({ formType }) {
 				firstName: newFirstName,
 				lastName: newLastName,
 			};
-			addDoc(studentsReference, studentData).catch(error =>
-				console.error(error)
-			);
+			addDoc(studentsReference, studentData)
+				.then(() => {
+					setFirstName("");
+					setLastName("");
+				})
+				.catch(error => console.error(error));
 		};
 		return (
 			<Grid
@@ -291,6 +298,10 @@ export function AdminFormComponent({ formType }) {
 					setDoc(teacherDoc, teacherData)
 						.then(() => {
 							signOut(auth);
+							setFirstName("");
+							setLastName("");
+							setSelectedClassNames([]);
+							setSelectedClassIDs([]);
 						})
 						.catch(error => console.error(error));
 				}

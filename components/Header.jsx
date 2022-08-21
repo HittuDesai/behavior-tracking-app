@@ -41,7 +41,8 @@ export function Header() {
 				...loggedInTeacherSnapshot.data(),
 				teacherID: loggedInTeacherSnapshot.id,
 			};
-			const arrayOfClassIDs = loggedInTeacherData.classes;
+			const arrayOfClassIDs = loggedInTeacherData?.classes;
+			if (!arrayOfClassIDs || arrayOfClassIDs.length === 0) return;
 			let arrayOfClassData = [];
 			for (const classID of arrayOfClassIDs) {
 				const classReference = doc(db, `classes/${classID}`);
