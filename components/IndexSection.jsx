@@ -4,17 +4,20 @@ import { useRouter } from "next/router";
 import { SignIn } from "./Signin";
 
 import {
+	Autocomplete,
 	Box,
 	Button,
+	CircularProgress,
 	Grid,
 	InputLabel,
 	MenuItem,
 	Select,
+	TextField,
 	Typography,
 } from "@mui/material";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import ArrowCircleRightOutlinedIcon from "@mui/icons-material/ArrowCircleRightOutlined";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
 export function IndexSection() {
@@ -22,67 +25,62 @@ export function IndexSection() {
 
 	const ViewStudentProfileComponent = () => {
 		const router = useRouter();
-		const allClasses = loggedInTeacherData?.classes;
-		const [selectedClass, setSelectedClass] = useState(null);
 
 		const [allStudentsLoaded, setAllStudentsLoaded] = useState(false);
 		const [allStudents, setAllStudents] = useState([]);
-		const handleClassSelect = async event => {
-			setAllStudentsLoaded(false);
-			const dataOfSelectedClass = event.target.value;
-			setSelectedClass(dataOfSelectedClass);
+		useEffect(() => {
+			const studentsCollection = collection(db, "students");
+			getDocs(studentsCollection)
+				.then(allStudentsSnapshot => {
+					const arrayOfStudentDocRefs = allStudentsSnapshot.docs;
+					let tempStudentDataArray = [];
+					arrayOfStudentDocRefs.forEach(studentDoc => {
+						const studentID = studentDoc.id;
+						const studentData = studentDoc.data();
+						tempStudentDataArray.push({
+							...studentData,
+							studentID,
+						});
+					});
+					setAllStudents(tempStudentDataArray);
+					setAllStudentsLoaded(true);
+				})
+				.catch(error => console.log(error));
+		}, []);
 
-			let arrayOfStudentData = [];
-			const arrayOfStudentIDs = dataOfSelectedClass.students;
-			for (const studentID of arrayOfStudentIDs) {
-				const studentReference = doc(db, `students/${studentID}`);
-				const studentSnapshot = await getDoc(studentReference);
-				const studentData = studentSnapshot.data();
-				arrayOfStudentData.push({ ...studentData, studentID });
-			}
-			setAllStudents(arrayOfStudentData);
-			setAllStudentsLoaded(true);
-		};
-
-		const [selectedStudent, setSelectedStudent] = useState("");
-		const handleStudentSelect = event => {
-			const dataOfSelectedStudent = event.target.value;
-			console.log(dataOfSelectedStudent);
-			setSelectedStudent(dataOfSelectedStudent);
+		const [selectedStudentData, setSelectedStudentData] = useState(null);
+		const handleStudentSelect = (event, newValue) => {
+			setSelectedStudentData(newValue);
 		};
 
 		return (
 			<Grid
 				container
 				direction="column"
-				alignItems="flex-start"
+				alignItems="center"
 				justifyContent="center"
 				rowGap="1rem"
 				padding="1rem"
 				height="80vh"
 			>
-				<Box sx={{ width: "100%" }}>
-					<InputLabel>Select Class</InputLabel>
-					<Select
-						onChange={handleClassSelect}
-						onOpen={() => setAllStudentsLoaded(false)}
-						onClose={() => {
-							if (allStudents) setAllStudentsLoaded(true);
-						}}
-						variant="filled"
-						sx={{ width: "100%" }}
-					>
-						{allClasses.map(currentClass => (
-							<MenuItem
-								key={currentClass.classID}
-								value={currentClass}
-							>
-								{currentClass.name}
-							</MenuItem>
-						))}
-					</Select>
-				</Box>
-
+				{allStudentsLoaded ? (
+					<Box sx={{ width: "100%" }}>
+						<InputLabel>Select Student</InputLabel>
+						<Autocomplete
+							options={allStudents}
+							getOptionLabel={option =>
+								option.firstName + " " + option.lastName
+							}
+							renderInput={params => <TextField {...params} />}
+							onChange={handleStudentSelect}
+						/>
+					</Box>
+				) : (
+					<>
+						<CircularProgress />
+						<Typography>Fetching all Student Data</Typography>
+					</>
+				)}
 				<Grid
 					container
 					direction="row"
@@ -90,24 +88,29 @@ export function IndexSection() {
 					justifyContent="space-between"
 				>
 					<Button
-						variant="text"
+						fullWidth={!allStudentsLoaded}
+						variant={allStudentsLoaded ? "text" : "contained"}
 						onClick={() => setIndexSectionStatus("default")}
 					>
 						Cancel
 						<CancelOutlinedIcon sx={{ marginLeft: "0.5rem" }} />
 					</Button>
-					<Button
-						disabled={!(selectedClass && selectedStudent)}
-						variant="contained"
-						onClick={() => {
-							router.push(`/${selectedStudent.studentID}`);
-						}}
-					>
-						See Record
-						<ArrowCircleRightOutlinedIcon
-							sx={{ marginLeft: "0.5rem", flexGrow: "1" }}
-						/>
-					</Button>
+					{allStudentsLoaded && (
+						<Button
+							disabled={!selectedStudentData}
+							variant="contained"
+							onClick={() => {
+								router.push(
+									`/${selectedStudentData.studentID}`
+								);
+							}}
+						>
+							See Record
+							<ArrowCircleRightOutlinedIcon
+								sx={{ marginLeft: "0.5rem", flexGrow: "1" }}
+							/>
+						</Button>
+					)}
 				</Grid>
 			</Grid>
 		);
