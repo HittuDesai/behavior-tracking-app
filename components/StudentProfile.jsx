@@ -97,7 +97,9 @@ export function StudentProfile({ studentData }) {
 			<Divider sx={{ width: "100%" }}>
 				<Typography variant="overline">All Behaviors</Typography>
 			</Divider>
-			<Behaviors behaviors={behaviors} />
+			<Grid item flex={1}>
+				<Behaviors behaviors={behaviors} />
+			</Grid>
 		</Grid>
 	);
 }

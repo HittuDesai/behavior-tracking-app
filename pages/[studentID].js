@@ -39,6 +39,19 @@ export async function getServerSideProps(context) {
 
 	const studentData = studentSnapshot.data();
 	const arrayOfBehaviorIDs = studentData.behaviors;
+	if (!arrayOfBehaviorIDs || arrayOfBehaviorIDs.length === 0) {
+		const newStudentData = {
+			...studentData,
+			studentID,
+			behaviors: {},
+		};
+		return {
+			props: {
+				studentFound: true,
+				studentData: newStudentData,
+			},
+		};
+	}
 	let arrayOfBehaviorData = [];
 	for (const behaviorID of arrayOfBehaviorIDs) {
 		const behaviorDoc = doc(db, `behaviors/${behaviorID}`);
