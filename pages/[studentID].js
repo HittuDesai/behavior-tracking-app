@@ -44,6 +44,7 @@ export async function getServerSideProps(context) {
 		const behaviorDoc = doc(db, `behaviors/${behaviorID}`);
 		const behaviorSnapshot = await getDoc(behaviorDoc);
 		const behaviorData = behaviorSnapshot.data();
+		behaviorData.time = behaviorData.time.toJSON();
 		arrayOfBehaviorData.push({ ...behaviorData, behaviorID });
 	}
 

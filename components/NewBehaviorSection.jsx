@@ -23,6 +23,7 @@ import {
 	collection,
 	doc,
 	getDoc,
+	serverTimestamp,
 	updateDoc,
 } from "firebase/firestore";
 
@@ -308,6 +309,7 @@ export function NewBehaviorSection() {
 			behaviorName: selectedBehavior,
 			interventionName: selectedIntervention,
 			interventionSuccess: interventionResult,
+			time: serverTimestamp(),
 		};
 		const behaviorsCollection = collection(db, "behaviors");
 		addDoc(behaviorsCollection, behaviorData)
