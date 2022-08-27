@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useReducer, useState } from "react";
 import { LoggedInTeacherContext } from "../context/LoggedInTeacherContext";
 import { useRouter } from "next/router";
 
@@ -26,6 +26,24 @@ import {
 	serverTimestamp,
 	updateDoc,
 } from "firebase/firestore";
+import { StepZeroComponent } from "./StepZeroComponent";
+import { StepOneComponent } from "./StepOneComponent";
+import { StepTwoComponent } from "./tepTwoComponent";
+
+export const StepZeroActions = {
+	SET_SELECTED_CLASS_DATA: "setSelectedClassData",
+	SET_SELECTED_STUDENT_DATA: "setSelectedStudentData",
+};
+
+export const StepOneActions = {
+	SET_SELECTED_BEHAVIOR_TYPE: "setSelectedBehaviorType",
+	SET_SELECTED_BEHAVIOR_NAME: "setSelectedBehaviorName",
+};
+
+export const StepTwoActions = {
+	SET_SELECTED_INTERVENTION_NAME: "setSelectedInterventionName",
+	SET_SUCCESS_OF_INTERVENTION: "setSuccessOfIntervention",
+};
 
 export function NewBehaviorSection() {
 	const { loggedInTeacherData } = useContext(LoggedInTeacherContext);
@@ -39,298 +57,122 @@ export function NewBehaviorSection() {
 
 	const [currentStep, setCurrentStep] = useState(0);
 
-	const allClasses = loggedInTeacherData?.classes;
-	const [selectedClass, setSelectedClass] = useState(null);
-	const [selectedClassName, setSelectedClassName] = useState("");
-
-	const [allStudentsLoaded, setAllStudentsLoaded] = useState(false);
-	const [allStudents, setAllStudents] = useState([]);
-	const handleClassSelect = async event => {
-		setAllStudentsLoaded(false);
-		const nameOfSelectedClass = event.target.value;
-		setSelectedClassName(nameOfSelectedClass);
-		const dataOfSelectedClass = allClasses.filter(
-			classData => classData.name === nameOfSelectedClass
-		)[0];
-		setSelectedClass(dataOfSelectedClass);
-
-		let arrayOfStudentData = [];
-		const arrayOfStudentIDs = dataOfSelectedClass.students;
-		for (const studentID of arrayOfStudentIDs) {
-			const studentReference = doc(db, `students/${studentID}`);
-			const studentSnapshot = await getDoc(studentReference);
-			const studentData = studentSnapshot.data();
-			arrayOfStudentData.push({ ...studentData, studentID });
+	const stepZeroReducer = (previousStepZeroData, action) => {
+		switch (action.type) {
+			case StepZeroActions.SET_SELECTED_CLASS_DATA:
+				return {
+					...previousStepZeroData,
+					selectedClass: action.payload.dataOfSelectedClass,
+				};
+			case StepZeroActions.SET_SELECTED_STUDENT_DATA:
+				return {
+					...previousStepZeroData,
+					selectedStudent: action.payload.dataOfSelectedStudent,
+				};
 		}
-		setAllStudents(arrayOfStudentData);
-		setAllStudentsLoaded(true);
 	};
+	const [stepZeroData, stepZeroDispatch] = useReducer(stepZeroReducer, {
+		selectedClass: {},
+		selectedStudent: {},
+	});
 
-	const [selectedStudent, setSelectedStudent] = useState("");
-	const handleStudentSelect = event => {
-		const dataOfSelectedStudent = event.target.value;
-		setSelectedStudent(dataOfSelectedStudent);
+	const stepOneReducer = (previousStepOneData, action) => {
+		switch (action.type) {
+			case StepOneActions.SET_SELECTED_BEHAVIOR_TYPE:
+				return {
+					...previousStepOneData,
+					selectedBehaviorType: action.payload.typeOfBehavior,
+				};
+			case StepOneActions.SET_SELECTED_BEHAVIOR_NAME:
+				return {
+					...previousStepOneData,
+					selectedBehaviorName: action.payload.nameOfBehavior,
+				};
+		}
 	};
+	const [stepOneData, stepOneDispatch] = useReducer(stepOneReducer, {
+		selectedBehaviorType: "",
+		selectedBehaviorName: "",
+	});
 
-	const StepZeroComponent = () => (
-		<>
-			<Box sx={{ width: "100%" }}>
-				<InputLabel>Select Class</InputLabel>
-				<Select
-					onChange={handleClassSelect}
-					onOpen={() => setAllStudentsLoaded(false)}
-					onClose={() => {
-						if (allStudents) setAllStudentsLoaded(true);
-					}}
-					value={selectedClassName.valueOf()}
-					variant="filled"
-					sx={{ width: "100%" }}
-				>
-					{allClasses?.map(currentClass => (
-						<MenuItem
-							key={currentClass.classID}
-							value={currentClass.name}
-						>
-							{currentClass.name}
-						</MenuItem>
-					))}
-				</Select>
-			</Box>
-
-			<Box sx={{ width: "100%" }}>
-				<InputLabel>Select Student</InputLabel>
-				<Select
-					disabled={!allStudentsLoaded}
-					value={selectedStudent}
-					onChange={handleStudentSelect}
-					variant="filled"
-					sx={{ width: "100%" }}
-				>
-					{allStudents.map(studentData => (
-						<MenuItem
-							key={studentData.studentID}
-							value={studentData}
-						>
-							{studentData.firstName}
-						</MenuItem>
-					))}
-				</Select>
-			</Box>
-		</>
-	);
-
-	const allBehaviors = {
-		Academic: [
-			"Out of Seat",
-			"Appearing to do nothing",
-			"Working on unrelated material",
-			"Looking around the room",
-			"Earbuds In",
-			"Inappropriate Phone Use",
-			"Head Down",
-			"Sleeping",
-			"Unprepared for Class (Chromebook not charged)",
-		],
-		Emotional: [
-			"Withdrawn",
-			"Socially Isolated",
-			"Impulsive Behavior",
-			"Crying",
-			"Pulling Hair",
-			"Consistent Fidgeting",
-		],
-		Social: [
-			"Talking Out",
-			"Talking Back to Staff",
-			"Negative Comments",
-			"Using Profanity",
-			"Name Calling",
-			"Yelling/Raising Voice",
-			"Verbal Threats",
-			"Inappropriate Symbolism",
-			"Talking to Peers",
-			"Cooperation with Others",
-		],
+	const stepTwoReducer = (previousStepTwoData, action) => {
+		switch (action.type) {
+			case StepTwoActions.SET_SELECTED_INTERVENTION_NAME:
+				return {
+					...previousStepTwoData,
+					selectedInterventionName: action.payload.nameOfIntervention,
+				};
+			case StepTwoActions.SET_SUCCESS_OF_INTERVENTION:
+				return {
+					...previousStepTwoData,
+					wasInterventionSuccess:
+						action.payload.wasInterventionSuccessful,
+				};
+		}
 	};
-	const [selectedBehaviorType, setSelectedBehaviorType] = useState("");
-	const [selectedBehavior, setSelectedBehavior] = useState("");
-
-	const handleBehaviorTypeSelect = event => {
-		setSelectedBehaviorType(event.target.value);
-	};
-
-	const handleBehaviorNameSelect = event => {
-		setSelectedBehavior(event.target.value);
-	};
-
-	const StepOneComponent = () => (
-		<>
-			<Box sx={{ width: "100%" }}>
-				<InputLabel>Select Behavior Type</InputLabel>
-				<Select
-					value={selectedBehaviorType}
-					onChange={handleBehaviorTypeSelect}
-					variant="filled"
-					sx={{ width: "100%" }}
-				>
-					{Object.keys(allBehaviors).map(behaviorsType => (
-						<MenuItem key={behaviorsType} value={behaviorsType}>
-							{behaviorsType}
-						</MenuItem>
-					))}
-				</Select>
-			</Box>
-
-			<Box sx={{ width: "100%" }}>
-				<InputLabel>Select Behavior</InputLabel>
-				<Select
-					disabled={selectedBehaviorType === ""}
-					value={selectedBehavior}
-					onChange={handleBehaviorNameSelect}
-					variant="filled"
-					sx={{ width: "100%" }}
-				>
-					{allBehaviors[selectedBehaviorType]?.map(behaviorsName => (
-						<MenuItem key={behaviorsName} value={behaviorsName}>
-							{behaviorsName}
-						</MenuItem>
-					))}
-				</Select>
-			</Box>
-		</>
-	);
-
-	const allInterventions = {
-		1: [
-			"Verbal Prompt/Redirection",
-			"Nonverbal Prompt",
-			"Directive Statement",
-			"Refer to Student by Name",
-			"Student-Teacher Conference",
-			"Time and Space",
-			"Request Student Break",
-			"Offer Choices",
-			"Phone Collected",
-			"Change Environment",
-		],
-		2: [
-			"Time Away from Class",
-			"Behavior Reflection Sheet",
-			"Dean Referral",
-			"Parent Meeting",
-			"Special Education",
-			"Administration",
-			"Parent Contact",
-		],
-		3: ["In-School Suspension", "Out-of-School Suspension"],
-	};
-	const [selectedIntervention, setSelectedIntervention] = useState("");
-	const [interventionResult, setInterventionResult] = useState(true);
-
-	const handleInterventionSelect = event => {
-		setSelectedIntervention(event.target.value);
-	};
-
-	const handleInterventionResult = event => {
-		setInterventionResult(event.target.value === "Yes" ? true : false);
-	};
-
-	const StepTwoComponent = () => (
-		<>
-			<Box sx={{ width: "100%" }}>
-				<InputLabel>Select Intervention Made</InputLabel>
-				<Select
-					value={selectedIntervention}
-					onChange={handleInterventionSelect}
-					variant="filled"
-					sx={{ width: "100%" }}
-				>
-					{Object.values(allInterventions)
-						.flat()
-						.map(intervention => (
-							<MenuItem key={intervention} value={intervention}>
-								{intervention}
-							</MenuItem>
-						))}
-				</Select>
-			</Box>
-
-			<InputLabel>Was Intervention Successful?</InputLabel>
-			<Select
-				disabled={selectedIntervention === ""}
-				value={interventionResult ? "Yes" : "No"}
-				onChange={handleInterventionResult}
-				variant="filled"
-				sx={{ width: "100%" }}
-			>
-				<MenuItem key="Yes" value="Yes">
-					Yes
-				</MenuItem>
-				<MenuItem key="No" value="No">
-					No
-				</MenuItem>
-			</Select>
-		</>
-	);
+	const [stepTwoData, stepTwoDispatch] = useReducer(stepTwoReducer, {
+		selectedInterventionName: "",
+		wasInterventionSuccess: true,
+	});
 
 	const [disabled, setDisabled] = useState(true);
 	useEffect(() => {
 		if (currentStep === 0) {
-			if (selectedClass && selectedStudent) setDisabled(false);
+			if (stepZeroData.selectedClass && stepZeroData.selectedStudent)
+				setDisabled(false);
 			else setDisabled(true);
 		} else if (currentStep === 1) {
-			if (selectedBehaviorType && selectedBehavior) setDisabled(false);
+			if (
+				stepOneData.selectedBehaviorType &&
+				stepOneData.selectedBehaviorName
+			)
+				setDisabled(false);
 			else setDisabled(true);
 		}
 		if (currentStep === 2) {
-			setDisabled(!selectedIntervention);
+			setDisabled(!stepTwoData.wasInterventionSuccess);
 		}
-	}, [
-		currentStep,
-		selectedClass,
-		selectedStudent,
-		selectedBehaviorType,
-		selectedBehavior,
-		selectedIntervention,
-		interventionResult,
-	]);
+	}, [currentStep, stepZeroData, stepOneData, stepTwoData]);
 
 	const [loading, setLoading] = useState(false);
 	const logBehaviorHandler = () => {
-		setLoading(true);
-		const classID = selectedClass.classID;
-		const teacherID = loggedInTeacherData.teacherID;
-		const studentID = selectedStudent.studentID;
-		const behaviorData = {
-			classID,
-			teacherID,
-			studentID,
-			behaviorType: selectedBehaviorType,
-			behaviorName: selectedBehavior,
-			interventionName: selectedIntervention,
-			interventionSuccess: interventionResult,
-			time: serverTimestamp(),
-		};
-		const behaviorsCollection = collection(db, "behaviors");
-		addDoc(behaviorsCollection, behaviorData)
-			.then(behaviorSnapshot => {
-				const behaviorID = behaviorSnapshot.id;
-				const classDocRef = doc(db, `classes/${classID}`);
-				updateDoc(classDocRef, {
-					behaviors: arrayUnion(behaviorID),
-				});
-				const teacherDocRef = doc(db, `teachers/${teacherID}`);
-				updateDoc(teacherDocRef, {
-					behaviors: arrayUnion(behaviorID),
-				});
-				const studentDocRef = doc(db, `students/${studentID}`);
-				updateDoc(studentDocRef, {
-					behaviors: arrayUnion(behaviorID),
-				});
-			})
-			.then(() => {
-				setLoading(false);
-			});
+		console.log(stepZeroData);
+		console.log(stepOneData);
+		console.log(stepTwoData);
+		// setLoading(true);
+		// const classID = selectedClass.classID;
+		// const teacherID = loggedInTeacherData.teacherID;
+		// const studentID = selectedStudent.studentID;
+		// const behaviorData = {
+		// 	classID,
+		// 	teacherID,
+		// 	studentID,
+		// 	behaviorType: selectedBehaviorType,
+		// 	behaviorName: selectedBehavior,
+		// 	interventionName: selectedIntervention,
+		// 	interventionSuccess: interventionResult,
+		// 	time: serverTimestamp(),
+		// };
+		// const behaviorsCollection = collection(db, "behaviors");
+		// addDoc(behaviorsCollection, behaviorData)
+		// 	.then(behaviorSnapshot => {
+		// 		const behaviorID = behaviorSnapshot.id;
+		// 		const classDocRef = doc(db, `classes/${classID}`);
+		// 		updateDoc(classDocRef, {
+		// 			behaviors: arrayUnion(behaviorID),
+		// 		});
+		// 		const teacherDocRef = doc(db, `teachers/${teacherID}`);
+		// 		updateDoc(teacherDocRef, {
+		// 			behaviors: arrayUnion(behaviorID),
+		// 		});
+		// 		const studentDocRef = doc(db, `students/${studentID}`);
+		// 		updateDoc(studentDocRef, {
+		// 			behaviors: arrayUnion(behaviorID),
+		// 		});
+		// 	})
+		// 	.then(() => {
+		// 		setLoading(false);
+		// 	});
 	};
 
 	const LoggingSuccessComponent = () => {
@@ -368,9 +210,18 @@ export function NewBehaviorSection() {
 	};
 
 	const arrayOfComponents = [
-		<StepZeroComponent />,
-		<StepOneComponent />,
-		<StepTwoComponent />,
+		<StepZeroComponent
+			stepZeroData={stepZeroData}
+			stepZeroDispatch={stepZeroDispatch}
+		/>,
+		<StepOneComponent
+			stepOneData={stepOneData}
+			stepOneDispatch={stepOneDispatch}
+		/>,
+		<StepTwoComponent
+			stepTwoData={stepTwoData}
+			stepTwoDispatch={stepTwoDispatch}
+		/>,
 		<LoggingSuccessComponent />,
 	];
 
