@@ -207,18 +207,21 @@ export function NewBehaviorSection() {
 
 	const arrayOfComponents = [
 		<StepZeroComponent
+			key="StepZeroComponent"
 			stepZeroData={stepZeroData}
 			stepZeroDispatch={stepZeroDispatch}
 		/>,
 		<StepOneComponent
+			key="StepOneComponent"
 			stepOneData={stepOneData}
 			stepOneDispatch={stepOneDispatch}
 		/>,
 		<StepTwoComponent
+			key="StepTwoComponent"
 			stepTwoData={stepTwoData}
 			stepTwoDispatch={stepTwoDispatch}
 		/>,
-		<LoggingSuccessComponent />,
+		<LoggingSuccessComponent key="LoggingSuccessComponent" />,
 	];
 
 	return (
