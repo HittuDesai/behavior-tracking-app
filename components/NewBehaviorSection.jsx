@@ -2,16 +2,7 @@ import { useContext, useEffect, useReducer, useState } from "react";
 import { LoggedInTeacherContext } from "../context/LoggedInTeacherContext";
 import { useRouter } from "next/router";
 
-import {
-	Box,
-	Button,
-	CircularProgress,
-	Grid,
-	InputLabel,
-	MenuItem,
-	Select,
-	Typography,
-} from "@mui/material";
+import { Button, CircularProgress, Grid, Typography } from "@mui/material";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import ArrowCircleRightOutlinedIcon from "@mui/icons-material/ArrowCircleRightOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -22,7 +13,6 @@ import {
 	arrayUnion,
 	collection,
 	doc,
-	getDoc,
 	serverTimestamp,
 	updateDoc,
 } from "firebase/firestore";
@@ -42,6 +32,7 @@ export const StepOneActions = {
 
 export const StepTwoActions = {
 	SET_SELECTED_INTERVENTION_NAME: "setSelectedInterventionName",
+	SET_SELECTED_INTERVENTION_TIER: "setSelectedInterventionTier",
 	SET_SUCCESS_OF_INTERVENTION: "setSuccessOfIntervention",
 };
 
@@ -102,6 +93,12 @@ export function NewBehaviorSection() {
 					...previousStepTwoData,
 					selectedInterventionName: action.payload.nameOfIntervention,
 				};
+			case StepTwoActions.SET_SELECTED_INTERVENTION_TIER:
+				return {
+					...previousStepTwoData,
+					tierOfSelectedIntervention:
+						action.payload.tierOfSelectedIntervention,
+				};
 			case StepTwoActions.SET_SUCCESS_OF_INTERVENTION:
 				return {
 					...previousStepTwoData,
@@ -111,6 +108,7 @@ export function NewBehaviorSection() {
 		}
 	};
 	const [stepTwoData, stepTwoDispatch] = useReducer(stepTwoReducer, {
+		selectedInterventionTier: 1,
 		selectedInterventionName: "",
 		wasInterventionSuccess: true,
 	});
@@ -136,43 +134,41 @@ export function NewBehaviorSection() {
 
 	const [loading, setLoading] = useState(false);
 	const logBehaviorHandler = () => {
-		console.log(stepZeroData);
-		console.log(stepOneData);
-		console.log(stepTwoData);
-		// setLoading(true);
-		// const classID = selectedClass.classID;
-		// const teacherID = loggedInTeacherData.teacherID;
-		// const studentID = selectedStudent.studentID;
-		// const behaviorData = {
-		// 	classID,
-		// 	teacherID,
-		// 	studentID,
-		// 	behaviorType: selectedBehaviorType,
-		// 	behaviorName: selectedBehavior,
-		// 	interventionName: selectedIntervention,
-		// 	interventionSuccess: interventionResult,
-		// 	time: serverTimestamp(),
-		// };
-		// const behaviorsCollection = collection(db, "behaviors");
-		// addDoc(behaviorsCollection, behaviorData)
-		// 	.then(behaviorSnapshot => {
-		// 		const behaviorID = behaviorSnapshot.id;
-		// 		const classDocRef = doc(db, `classes/${classID}`);
-		// 		updateDoc(classDocRef, {
-		// 			behaviors: arrayUnion(behaviorID),
-		// 		});
-		// 		const teacherDocRef = doc(db, `teachers/${teacherID}`);
-		// 		updateDoc(teacherDocRef, {
-		// 			behaviors: arrayUnion(behaviorID),
-		// 		});
-		// 		const studentDocRef = doc(db, `students/${studentID}`);
-		// 		updateDoc(studentDocRef, {
-		// 			behaviors: arrayUnion(behaviorID),
-		// 		});
-		// 	})
-		// 	.then(() => {
-		// 		setLoading(false);
-		// 	});
+		setLoading(true);
+		const classID = stepZeroData.selectedClass.classID;
+		const teacherID = loggedInTeacherData.teacherID;
+		const studentID = stepZeroData.selectedStudent.studentID;
+		const behaviorData = {
+			classID,
+			teacherID,
+			studentID,
+			behaviorType: stepOneData.selectedBehaviorType,
+			behaviorName: stepOneData.selectedBehaviorName,
+			interventionTier: stepTwoData.selectedInterventionTier,
+			interventionName: stepTwoData.selectedInterventionName,
+			interventionSuccess: stepTwoData.wasInterventionSuccess,
+			time: serverTimestamp(),
+		};
+		const behaviorsCollection = collection(db, "behaviors");
+		addDoc(behaviorsCollection, behaviorData)
+			.then(behaviorSnapshot => {
+				const behaviorID = behaviorSnapshot.id;
+				const classDocRef = doc(db, `classes/${classID}`);
+				updateDoc(classDocRef, {
+					behaviors: arrayUnion(behaviorID),
+				});
+				const teacherDocRef = doc(db, `teachers/${teacherID}`);
+				updateDoc(teacherDocRef, {
+					behaviors: arrayUnion(behaviorID),
+				});
+				const studentDocRef = doc(db, `students/${studentID}`);
+				updateDoc(studentDocRef, {
+					behaviors: arrayUnion(behaviorID),
+				});
+			})
+			.then(() => {
+				setLoading(false);
+			});
 	};
 
 	const LoggingSuccessComponent = () => {

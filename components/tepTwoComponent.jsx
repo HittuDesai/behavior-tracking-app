@@ -34,12 +34,28 @@ export function StepTwoComponent({ stepTwoData, stepTwoDispatch }) {
 				<InputLabel>Select Intervention Made</InputLabel>
 				<Select
 					value={selectedInterventionName}
-					onChange={event =>
+					onChange={event => {
+						const nameOfIntervention = event.target.value;
 						stepTwoDispatch({
 							type: StepTwoActions.SET_SELECTED_INTERVENTION_NAME,
-							payload: { nameOfIntervention: event.target.value },
-						})
-					}
+							payload: { nameOfIntervention },
+						});
+						let tierOfSelectedIntervention = 1;
+						for (const interventionTier in allInterventions) {
+							if (
+								allInterventions[interventionTier].includes(
+									nameOfIntervention
+								)
+							) {
+								tierOfSelectedIntervention = interventionTier;
+								break;
+							}
+						}
+						stepTwoDispatch({
+							type: StepTwoActions.SET_SELECTED_INTERVENTION_TIER,
+							payload: { nameOfIntervention },
+						});
+					}}
 					variant="filled"
 					sx={{ width: "100%" }}
 				>
